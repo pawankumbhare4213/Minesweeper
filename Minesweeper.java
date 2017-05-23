@@ -1,5 +1,3 @@
-package companies;
-
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Scanner;
@@ -29,30 +27,38 @@ public class Minesweeper {
 	private HashSet<Integer> bombs;
 	private final int BOMB = -1;
 	private boolean WITH_MASK = true;
-	//L1 as EASY to L5 as HARD
 	private enum Level { 
 		EASY, MEDIUM, HARD 
 	}
 	
 	public Minesweeper(int rows, int cols, Level difficulty) {
+		if (rows < 3 || cols < 3 || rows > 30 || cols > 30) {
+			System.out.println("Minimum size must be 3 * 3 and Maximum size must be 30 * 30!");
+			return;
+		}
+		
 		board = new Cell[rows][cols];
 		rand = new Random();
+		
 		int no_bombs = rows * cols;
 		int randomness = rand.nextInt(4);
+		
 		switch (difficulty) {
 			case EASY:
-				no_bombs = (int) (no_bombs * 0.15 + randomness); // 15%
+				no_bombs = (int) (no_bombs * 0.15 + randomness); // 15% Bombs
 				break;
 			case MEDIUM:
-				no_bombs = (int) (no_bombs * 0.25 + randomness); // 30%
+				no_bombs = (int) (no_bombs * 0.25 + randomness); // 30% Bombs
 				break;
 			case HARD:
-				no_bombs = (int) (no_bombs * 0.50 + randomness); // 50%
+				no_bombs = (int) (no_bombs * 0.50 + randomness); // 50% Bombs
 				break;
 		}
+		
 		played = new HashSet<>(rows * cols - no_bombs);
 		bombs = new HashSet<>(no_bombs);
 		
+		//Initialize Board
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[0].length; j++) {
 				board[i][j] = new Cell(0);
@@ -117,22 +123,20 @@ public class Minesweeper {
 
 	// return true if game continues else false
 	public boolean play(int row, int col) {
-		if (row < 0 || row >= board.length) {
+		if (row < 0 || row >= board.length || col < 0 || col >= board[0].length) {
 			System.out.println("Invalid input, please enter again : ");
 			return true;
 		}
-		if (col < 0 || col >= board[0].length) {
-			System.out.println("Invalid input, please enter again : ");
-			return true;
-		}
+		// Check if current cell is BOMB
 		if (board[row][col].val == BOMB) {
 			print(!WITH_MASK);
 			System.out.println("You got destroyed!");
 			System.out.println("Game Over!");
 			return false;
 		}
+		// Open cell and all twins if not open
 		if (!board[row][col].isOpen) {
-			openBrothers(row, col, board[row][col].val);
+			openTwins(row, col, board[row][col].val);
 			if (isComplete()) return false;
 			print(WITH_MASK);
 		} else System.out.println("Cell is already open!");
@@ -148,17 +152,16 @@ public class Minesweeper {
 		return false;
 	}
 
-	private void openBrothers(int row, int col, int same_val) {
-		if (row < 0 || row >= board.length) return;
-		if (col < 0 || col >= board[0].length) return;
+	private void openTwins(int row, int col, int same_val) {
+		if (row < 0 || row >= board.length || col < 0 || col >= board[0].length) return;
 		if (board[row][col].isOpen) return;
 		if (board[row][col].val == same_val) {
 			board[row][col].isOpen = true;
 			played.add(getIndexFromRowCol(row, col));
-			openBrothers(row, col - 1, same_val); // top
-			openBrothers(row + 1, col, same_val); // right
-			openBrothers(row, col + 1, same_val); // bottom
-			openBrothers(row - 1, col, same_val); // left
+			openTwins(row, col - 1, same_val); // top
+			openTwins(row + 1, col, same_val); // right
+			openTwins(row, col + 1, same_val); // bottom
+			openTwins(row - 1, col, same_val); // left
 		}
 	}
 
@@ -175,8 +178,9 @@ public class Minesweeper {
 	}
 
 	public static void main(String[] args) {
-		int rows = 8, cols = 4;
+		int rows = 10, cols = 5;
 		Minesweeper game = new Minesweeper(rows, cols, Level.MEDIUM);
+		if (game.board == null) return;
 		Scanner in = new Scanner(System.in);
 		System.out.println("Please enter row number (1 - " + cols + ") <space> column number (1 - " + rows + ") to play or 'EXIT' to exit : ");
 		while (in.hasNextLine()) {
